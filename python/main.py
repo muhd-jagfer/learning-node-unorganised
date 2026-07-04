@@ -1,11 +1,13 @@
 import pandas as pd
 import csv
 from datetime import datetime
+from data_entry import get_amount, get_catergory, get_date, get_description
+
 
 class CSV:
     CSV_FILE = "finance_data.csv"
     COLUMNS = ["date", "amount", "category", "description"]
-
+    FORMAT = "%d-%m-%Y"
     @classmethod
     def initialize_csv(cls):
         try:
@@ -26,5 +28,36 @@ class CSV:
             writer = csv.DictWriter(csvfile, fieldnames=cls.COLUMNS)
             writer.writerow(new_entry)
         print("Entry added successfully")
+    
+    @classmethod
+    def get_transactions(cls, start_date, end_date):
+        df = pd.read_csv(cls.CSV_FILE)
+        df["date"] = pd.to_datetime(df["date"], format = CSV.FORMAT)
+        start_date = datetime.strptime(start_date, CSV.FORMAT)
+        end_date = datetime.strptime(end_date, CSV.FORMAT)
         
-CSV.initialize_csv()
+        mask = (df["date"] >= start_date) & (df["date"] <= end_date)
+        filtered_df = df.loc[mask]
+
+
+        if filtered_df.empty:
+            print("No transaction found in the given date range")
+        else:
+            print(f"Transactions from {start_date.strftime(CSV.FORMAT)} to {end_date.strftime(CSV.FORMAT)}")
+            print(filtered_df.to_string(index = False, formatters={"date": lambda x: x.strftime(CSV.FORMAT)}))
+            
+            total_income = filtered_df[filtered_df["category"] == "Income"]["amount"].sum()
+            
+
+
+    
+def add():
+    CSV.initialize_csv()
+    date = get_date("Enter the date of the transaction (dd-mm-yyy) or enter for todays date : ", allow_default=True)
+    amount = get_amount()
+    category = get_catergory()
+    description = get_description()
+    CSV.add_entry(date, amount, category, description)
+
+        
+add()
